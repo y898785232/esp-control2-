@@ -2,53 +2,115 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>水泵控制系统</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>水泵控制系统 - 大门</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <style>
-    body { text-align: center; font-family: Arial, sans-serif; background: #f0f2f5; padding-top: 40px; margin: 0; }
-    h2 { color: #333; margin-bottom: 5px; }
-    .dev-id { color: #888; font-size: 14px; margin-bottom: 30px; }
+    body {
+      text-align: center;
+      font-family: Arial, sans-serif;
+      background: #f0f2f5;
+      padding: 20px 15px;
+      margin: 0;
+      min-height: 100vh;
+    }
+    h2 { 
+      color: #333; 
+      margin: 10px 0 5px; 
+      font-size: 28px;
+    }
+    .dev-id { 
+      color: #888; 
+      font-size: 15px; 
+      margin-bottom: 25px; 
+    }
     
+    /* 水泵滑动开关 */
     .toggle-switch {
-      position: relative; display: inline-block; width: 380px; height: 160px; margin: 20px;
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      max-width: 380px;
+      height: 150px;
+      margin: 20px auto;
     }
     .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background: #ccc; border-radius: 80px; transition: 0.4s; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #ccc;
+      border-radius: 80px;
+      transition: 0.4s;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
     }
     .slider:before {
-      position: absolute; content: ""; height: 140px; width: 140px; left: 10px; bottom: 10px;
-      background: white; border-radius: 50%; transition: 0.4s;
+      position: absolute;
+      content: "";
+      height: 130px;
+      width: 130px;
+      left: 10px;
+      bottom: 10px;
+      background: white;
+      border-radius: 50%;
+      transition: 0.4s;
     }
     input:checked + .slider { background: #28a745; }
     input:checked + .slider:before { transform: translateX(210px); }
 
-
     .slider span {
-      position: absolute; top: 50%; transform: translateY(-50%);
-      font-size: 32px; font-weight: bold; color: white;
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 30px;
+      font-weight: bold;
+      color: white;
     }
-    .off { left: 55px; }
-    .on { right: 55px; opacity: 0; }
+    .off { left: 50px; }
+    .on { right: 50px; opacity: 0; }
     input:checked + .slider .off { opacity: 0; }
     input:checked + .slider .on { opacity: 1; }
 
-
+    /* 灯按钮 */
     button {
-      width: 280px; height: 85px; font-size: 28px; margin: 15px;
-      border: none; border-radius: 12px; cursor: pointer; font-weight: bold;
+      width: 100%;
+      max-width: 320px;
+      height: 90px;
+      font-size: 28px;
+      margin: 15px auto;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: bold;
+      display: block;
     }
     .lamp-on  { background: #28a745; color: white; }
     .lamp-off { background: #dc3545; color: white; }
     
     .status-bar {
-      display: inline-block; padding: 8px 24px; border-radius: 20px;
-      font-weight: bold; font-size: 16px; margin-bottom: 20px;
+      display: inline-block;
+      padding: 8px 24px;
+      border-radius: 20px;
+      font-weight: bold;
+      font-size: 16px;
+      margin-bottom: 25px;
     }
     .online { background: #e6f7ed; color: #1f8b4c; }
     .offline { background: #ffebeb; color: #dc3545; }
+
+    hr {
+      width: 85%; 
+      border: 0.5px solid #ddd; 
+      margin: 30px auto;
+    }
+
+    /* 移动端优化 */
+    @media (max-width: 480px) {
+      h2 { font-size: 24px; }
+      .toggle-switch { height: 140px; }
+      .slider:before { height: 120px; width: 120px; }
+      button { height: 80px; font-size: 26px; }
+    }
   </style>
 </head>
 <body>
@@ -56,7 +118,6 @@
   <div class="dev-id">设备 ID: device_01</div>
   
   <div id="netStatus" class="status-bar offline">正在连接云端...</div>
-
 
   <p><strong>水泵遥控开关</strong></p>
   <label class="toggle-switch">
@@ -67,26 +128,20 @@
     </div>
   </label>
 
+  <hr>
 
-  <br><hr style="width: 80%; border: 0.5px solid #ddd;"><br>
-
-
-  <p><strong>💡 大棚照明（灯 1）</strong></p>
+  <p><strong>💡 大门照明（灯 1）</strong></p>
   <button id="lampBtn" class="lamp-off" onclick="toggleLamp()">灯 1 关</button>
 
-
 <script>
-// ==================== 配置区（已修正） ====================
+// ==================== 配置区 ====================
 const DEVICE_ID = "device_01";
-const BROKER_URL = "wss://b7fea2bf.ala.asia-southeast1.emqxsl.com:8084/mqtt";  // ← 关键修正：8084
-
+const BROKER_URL = "wss://b7fea2bf.ala.asia-southeast1.emqxsl.com:8084/mqtt";
 
 const cmdTopic    = `home/${DEVICE_ID}/pump/cmd`;
 const statusTopic = `home/${DEVICE_ID}/pump/status`;
 
-
 let lamp1State = false;
-
 
 const client = mqtt.connect(BROKER_URL, {
   clientId: 'web_' + Math.random().toString(16).substr(2, 8),
@@ -98,7 +153,6 @@ const client = mqtt.connect(BROKER_URL, {
   keepalive: 60
 });
 
-
 // ==================== 连接事件 ====================
 client.on('connect', () => {
   console.log("✅ MQTT 已成功连接！");
@@ -106,50 +160,43 @@ client.on('connect', () => {
   statusEl.textContent = "🟢 云端已连接";
   statusEl.className = "status-bar online";
 
-
-  client.subscribe(statusTopic, { qos: 1 }, (err) => {
-    if (!err) console.log("✅ 已订阅:", statusTopic);
-  });
+  client.subscribe(statusTopic, { qos: 1 });
 });
-
 
 client.on('reconnect', () => console.log("🔄 正在重连..."));
 client.on('close', () => {
-  console.log("❌ 连接断开");
   const statusEl = document.getElementById("netStatus");
   statusEl.textContent = "🔴 云端已断开";
   statusEl.className = "status-bar offline";
 });
 client.on('error', (err) => console.error("MQTT 错误:", err));
 
-
 // ==================== 接收消息 ====================
 client.on('message', (topic, message) => {
   const msg = message.toString().trim();
   console.log(`收到: ${msg}`);
-
 
   if (msg === "PUMP_ON") document.getElementById("pumpSwitch").checked = true;
   else if (msg === "PUMP_OFF") document.getElementById("pumpSwitch").checked = false;
   else if (msg === "ON1") {
     lamp1State = true;
     const btn = document.getElementById("lampBtn");
-    btn.textContent = "灯 1 开"; btn.className = "lamp-on";
+    btn.textContent = "灯 1 开"; 
+    btn.className = "lamp-on";
   }
   else if (msg === "OFF1") {
     lamp1State = false;
     const btn = document.getElementById("lampBtn");
-    btn.textContent = "灯 1 关"; btn.className = "lamp-off";
+    btn.textContent = "灯 1 关"; 
+    btn.className = "lamp-off";
   }
 });
-
 
 // ==================== 控制函数 ====================
 function handlePump(cb) {
   const cmd = cb.checked ? 'PUMP_ON' : 'PUMP_OFF';
   client.publish(cmdTopic, cmd, { qos: 1 });
 }
-
 
 function toggleLamp() {
   const cmd = lamp1State ? 'OFF1' : 'ON1';
