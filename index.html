@@ -6,84 +6,83 @@
   <title>水泵控制系统</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <style>
-    body { text-align: center; font-family: Arial, sans-serif; background: #f0f2f5; padding-top: 40px; margin: 0; }
-    h2 { color: #333; margin-bottom: 5px; }
-    .dev-id { color: #888; font-size: 14px; margin-bottom: 30px; }
+  body { text-align: center; font-family: Arial, sans-serif; background: #f0f2f5; padding-top: 28px; margin: 0; font-size: 11px; }
+  h2 { color: #333; margin-bottom: 5px; font-size: 18px; }
+  .dev-id { color: #888; font-size: 10px; margin-bottom: 21px; }
 
 
-    .toggle-switch {
-      position: relative; display: inline-block; width: 380px; height: 160px; margin: 20px;
-    }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background: #ccc; border-radius: 80px; transition: 0.4s; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-    }
-    .slider:before {
-      position: absolute; content: ""; height: 140px; width: 140px; left: 10px; bottom: 10px;
-      background: white; border-radius: 50%; transition: 0.4s;
-    }
-    input:checked + .slider { background: #28a745; }
-    input:checked + .slider:before { transform: translateX(210px); }
-    .slider span {
-      position: absolute; top: 50%; transform: translateY(-50%);
-      font-size: 32px; font-weight: bold; color: white;
-    }
-    .off { left: 55px; }
-    .on  { right: 55px; opacity: 0; }
-    input:checked + .slider .off { opacity: 0; }
-    input:checked + .slider .on  { opacity: 1; }
+  .toggle-switch {
+    position: relative; display: inline-block; width: 266px; height: 112px; margin: 14px;
+  }
+  .toggle-switch input { opacity: 0; width: 0; height: 0; }
+  .slider {
+    position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+    background: #ccc; border-radius: 56px; transition: 0.4s; box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+  }
+  .slider:before {
+    position: absolute; content: ""; height: 98px; width: 98px; left: 7px; bottom: 7px;
+    background: white; border-radius: 50%; transition: 0.4s;
+  }
+  input:checked + .slider { background: #28a745; }
+  input:checked + .slider:before { transform: translateX(147px); }
+  .slider span {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-size: 22px; font-weight: bold; color: white;
+  }
+  .off { left: 38px; }
+  .on  { right: 38px; opacity: 0; }
+  input:checked + .slider .off { opacity: 0; }
+  input:checked + .slider .on  { opacity: 1; }
 
 
-    button {
-      width: 280px; height: 85px; font-size: 28px; margin: 15px;
-      border: none; border-radius: 12px; cursor: pointer; font-weight: bold;
-    }
-    .lamp-on  { background: #28a745; color: white; }
-    .lamp-off { background: #dc3545; color: white; }
+  button {
+    width: 196px; height: 60px; font-size: 20px; margin: 10px;
+    border: none; border-radius: 10px; cursor: pointer; font-weight: bold;
+  }
+  .lamp-on  { background: #28a745; color: white; }
+  .lamp-off { background: #dc3545; color: white; }
 
 
-    .status-bar {
-      display: inline-block; padding: 8px 24px; border-radius: 20px;
-      font-weight: bold; font-size: 16px; margin-bottom: 20px;
-    }
-    .online  { background: #e6f7ed; color: #1f8b4c; }
-    .offline { background: #ffebeb; color: #dc3545; }
+  .status-bar {
+    display: inline-block; padding: 6px 17px; border-radius: 14px;
+    font-weight: bold; font-size: 11px; margin-bottom: 14px;
+  }
+  .online  { background: #e6f7ed; color: #1f8b4c; }
+  .offline { background: #ffebeb; color: #dc3545; }
 
 
-    /* 定时面板 */
-    .timer-panel {
-      display: inline-block; background: white; border-radius: 16px;
-      padding: 24px 36px; margin: 20px auto; box-shadow: 0 4px 16px rgba(0,0,0,0.10);
-      text-align: left; width: 340px;
-    }
-    .timer-panel h3 { margin: 0 0 16px; color: #333; text-align: center; font-size: 20px; }
-    .timer-row { display: flex; align-items: center; justify-content: space-between; margin: 12px 0; }
-    .timer-row label { font-size: 16px; color: #555; font-weight: bold; }
-    .timer-row input[type="time"] {
-      font-size: 20px; padding: 6px 10px; border: 2px solid #ddd;
-      border-radius: 8px; outline: none; width: 140px; text-align: center;
-    }
-    .timer-row input[type="time"]:focus { border-color: #28a745; }
+  .timer-panel {
+    display: inline-block; background: white; border-radius: 12px;
+    padding: 17px 25px; margin: 14px auto; box-shadow: 0 3px 12px rgba(0,0,0,0.10);
+    text-align: left; width: 238px;
+  }
+  .timer-panel h3 { margin: 0 0 11px; color: #333; text-align: center; font-size: 14px; }
+  .timer-row { display: flex; align-items: center; justify-content: space-between; margin: 8px 0; }
+  .timer-row label { font-size: 11px; color: #555; font-weight: bold; }
+  .timer-row input[type="time"] {
+    font-size: 14px; padding: 4px 7px; border: 2px solid #ddd;
+    border-radius: 6px; outline: none; width: 98px; text-align: center;
+  }
+  .timer-row input[type="time"]:focus { border-color: #28a745; }
 
 
-    .timer-enable-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 16px 0 8px; }
-    .timer-enable-row label { font-size: 16px; color: #555; }
+  .timer-enable-row { display: flex; align-items: center; justify-content: center; gap: 8px; margin: 11px 0 6px; }
+  .timer-enable-row label { font-size: 11px; color: #555; }
 
 
-    .btn-save {
-      width: 100%; height: 52px; font-size: 20px; margin: 12px 0 0;
-      background: #007bff; color: white; border: none; border-radius: 10px;
-      cursor: pointer; font-weight: bold;
-    }
-    .btn-save:hover { background: #0056b3; }
-    .btn-save:disabled { background: #aaa; cursor: not-allowed; }
+  .btn-save {
+    width: 100%; height: 36px; font-size: 14px; margin: 8px 0 0;
+    background: #007bff; color: white; border: none; border-radius: 8px;
+    cursor: pointer; font-weight: bold;
+  }
+  .btn-save:hover { background: #0056b3; }
+  .btn-save:disabled { background: #aaa; cursor: not-allowed; }
 
 
-    .timer-status {
-      text-align: center; font-size: 14px; color: #888; margin-top: 8px; min-height: 20px;
-    }
-  </style>
+  .timer-status {
+    text-align: center; font-size: 10px; color: #888; margin-top: 6px; min-height: 14px;
+  }
+</style>
 </head>
 <body>
   <h2>🚰 水泵控制系统</h2>
