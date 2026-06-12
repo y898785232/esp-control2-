@@ -1,134 +1,305 @@
 <!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<title>控制系统</title>
-<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>水泵控制系统</title>
+  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
+  <style>
+    body { text-align: center; font-family: Arial, sans-serif; background: #f0f2f5; padding-top: 40px; margin: 0; }
+    h2 { color: #333; margin-bottom: 5px; }
+    .dev-id { color: #888; font-size: 14px; margin-bottom: 30px; }
 
 
-<style>
-body { text-align:center; font-family:Arial; }
+    .toggle-switch {
+      position: relative; display: inline-block; width: 380px; height: 160px; margin: 20px;
+    }
+    .toggle-switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background: #ccc; border-radius: 80px; transition: 0.4s; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+    .slider:before {
+      position: absolute; content: ""; height: 140px; width: 140px; left: 10px; bottom: 10px;
+      background: white; border-radius: 50%; transition: 0.4s;
+    }
+    input:checked + .slider { background: #28a745; }
+    input:checked + .slider:before { transform: translateX(210px); }
+    .slider span {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      font-size: 32px; font-weight: bold; color: white;
+    }
+    .off { left: 55px; }
+    .on  { right: 55px; opacity: 0; }
+    input:checked + .slider .off { opacity: 0; }
+    input:checked + .slider .on  { opacity: 1; }
 
 
-button {
-  width:200px;height:80px;font-size:24px;margin:10px;
-}
+    button {
+      width: 280px; height: 85px; font-size: 28px; margin: 15px;
+      border: none; border-radius: 12px; cursor: pointer; font-weight: bold;
+    }
+    .lamp-on  { background: #28a745; color: white; }
+    .lamp-off { background: #dc3545; color: white; }
 
 
-.on { background:green;color:white; }
-.off { background:red;color:white; }
+    .status-bar {
+      display: inline-block; padding: 8px 24px; border-radius: 20px;
+      font-weight: bold; font-size: 16px; margin-bottom: 20px;
+    }
+    .online  { background: #e6f7ed; color: #1f8b4c; }
+    .offline { background: #ffebeb; color: #dc3545; }
 
 
-.status { margin:10px;padding:8px;display:inline-block; }
-</style>
+    /* 定时面板 */
+    .timer-panel {
+      display: inline-block; background: white; border-radius: 16px;
+      padding: 24px 36px; margin: 20px auto; box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+      text-align: left; width: 340px;
+    }
+    .timer-panel h3 { margin: 0 0 16px; color: #333; text-align: center; font-size: 20px; }
+    .timer-row { display: flex; align-items: center; justify-content: space-between; margin: 12px 0; }
+    .timer-row label { font-size: 16px; color: #555; font-weight: bold; }
+    .timer-row input[type="time"] {
+      font-size: 20px; padding: 6px 10px; border: 2px solid #ddd;
+      border-radius: 8px; outline: none; width: 140px; text-align: center;
+    }
+    .timer-row input[type="time"]:focus { border-color: #28a745; }
+
+
+    .timer-enable-row { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 16px 0 8px; }
+    .timer-enable-row label { font-size: 16px; color: #555; }
+
+
+    .btn-save {
+      width: 100%; height: 52px; font-size: 20px; margin: 12px 0 0;
+      background: #007bff; color: white; border: none; border-radius: 10px;
+      cursor: pointer; font-weight: bold;
+    }
+    .btn-save:hover { background: #0056b3; }
+    .btn-save:disabled { background: #aaa; cursor: not-allowed; }
+
+
+    .timer-status {
+      text-align: center; font-size: 14px; color: #888; margin-top: 8px; min-height: 20px;
+    }
+  </style>
 </head>
-
-
 <body>
+  <h2>🚰 水泵控制系统</h2>
+  <div class="dev-id">设备 ID: device_01</div>
 
 
-<h2>设备控制</h2>
+  <div id="netStatus" class="status-bar offline">正在连接云端...</div>
 
 
-<div id="status">连接中...</div>
+  <p><strong>水泵遥控开关</strong></p>
+  <label class="toggle-switch">
+    <input type="checkbox" id="pumpSwitch" onchange="handlePump(this)">
+    <div class="slider">
+      <span class="off">🚫 关闭</span>
+      <span class="on">✅ 开启</span>
+    </div>
+  </label>
 
 
-<hr>
+  <br><hr style="width: 80%; border: 0.5px solid #ddd;"><br>
 
 
-<h3>灯</h3>
-<button id="lampBtn" class="off" onclick="toggleLamp()">关闭</button>
+  <p><strong>💡 大棚照明（灯 1）</strong></p>
+  <button id="lampBtn" class="lamp-off" onclick="toggleLamp()">灯 1 关</button>
 
 
-<h3>水泵</h3>
-<button id="pumpBtn" class="off" onclick="togglePump()">关闭</button>
+  <br>
+
+
+  <!-- 定时面板 -->
+  <div class="timer-panel">
+    <h3>⏰ 灯定时设置</h3>
+
+
+    <div class="timer-enable-row">
+      <input type="checkbox" id="timerEnable" onchange="onTimerEnableChange()">
+      <label for="timerEnable">启用定时自动开关灯</label>
+    </div>
+
+
+    <div id="timerInputs" style="opacity:0.4; pointer-events:none;">
+      <div class="timer-row">
+        <label>🌅 开灯时间</label>
+        <input type="time" id="timeOn" value="18:00">
+      </div>
+      <div class="timer-row">
+        <label>🌙 关灯时间</label>
+        <input type="time" id="timeOff" value="22:00">
+      </div>
+    </div>
+
+
+    <button class="btn-save" id="btnSave" onclick="saveTimer()">保存定时设置</button>
+    <div class="timer-status" id="timerStatus">尚未设置定时</div>
+  </div>
 
 
 <script>
+// ==================== 配置区 ====================
+const DEVICE_ID   = "device_01";
+const BROKER_URL  = "wss://b7fea2bf.ala.asia-southeast1.emqxsl.com:8084/mqtt";
 
 
-const DEVICE_ID = "device_01";
-const BROKER = "wss://b7fea2bf.ala.asia-southeast1.emqxsl.com:8084/mqtt";
+const lampCmdTopic    = `home/${DEVICE_ID}/lamp/cmd`;
+const pumpCmdTopic    = `home/${DEVICE_ID}/pump/cmd`;
+const lampStatusTopic = `home/${DEVICE_ID}/lamp/status`;
+const pumpStatusTopic = `home/${DEVICE_ID}/pump/status`;
+const lampTimerTopic  = `home/${DEVICE_ID}/lamp/timer`;
 
 
-const lampCmd = `home/${DEVICE_ID}/lamp1/cmd`;
-const pumpCmd = `home/${DEVICE_ID}/pump/cmd`;
+let lamp1State = false;
 
 
-const lampStatus = `home/${DEVICE_ID}/lamp1/status`;
-const pumpStatus = `home/${DEVICE_ID}/pump/status`;
-
-
-let lamp = false;
-let pump = false;
-
-
-const client = mqtt.connect(BROKER,{
-  username:"eps8266nn",
-  password:"yu155414",
-  clientId:"web_" + Math.random().toString(16).substr(2,8)
+const client = mqtt.connect(BROKER_URL, {
+  clientId: 'web_' + Math.random().toString(16).substr(2, 8),
+  username: 'eps8266nn',
+  password: 'yu155414',
+  clean: true,
+  connectTimeout: 10000,
+  reconnectPeriod: 5000,
+  keepalive: 60
 });
 
 
-client.on("connect", () => {
-  document.getElementById("status").innerText = "已连接";
+// ==================== 连接事件 ====================
+client.on('connect', () => {
+  console.log("✅ MQTT 已成功连接！");
+  const statusEl = document.getElementById("netStatus");
+  statusEl.textContent = "🟢 云端已连接";
+  statusEl.className = "status-bar online";
 
 
-  client.subscribe(lampStatus);
-  client.subscribe(pumpStatus);
-
-
-  // 自动同步状态（关键）
-  client.publish(`home/${DEVICE_ID}/cmd`, "QUERY");
+  client.subscribe(lampStatusTopic, { qos: 1 });
+  client.subscribe(pumpStatusTopic, { qos: 1 });
+  client.subscribe(lampTimerTopic,  { qos: 1 }); // 订阅定时状态，页面刷新后自动恢复
 });
 
 
-client.on("message", (topic, msg) => {
-  msg = msg.toString();
+client.on('reconnect', () => console.log("🔄 正在重连..."));
+client.on('close', () => {
+  const statusEl = document.getElementById("netStatus");
+  statusEl.textContent = "🔴 云端已断开";
+  statusEl.className = "status-bar offline";
+});
+client.on('error', (err) => console.error("MQTT 错误:", err));
 
 
-  if (topic === lampStatus) {
-    lamp = (msg === "ON1");
-    updateLamp();
+// ==================== 接收消息 ====================
+client.on('message', (topic, message) => {
+  const msg = message.toString().trim();
+  console.log(`收到 [${topic}]: ${msg}`);
+
+
+  if (topic === pumpStatusTopic) {
+    if (msg === "PUMP_ON")  document.getElementById("pumpSwitch").checked = true;
+    if (msg === "PUMP_OFF") document.getElementById("pumpSwitch").checked = false;
+  }
+  else if (topic === lampStatusTopic) {
+    const btn = document.getElementById("lampBtn");
+    if (msg === "ON1") {
+      lamp1State = true;
+      btn.textContent = "灯 1 开";
+      btn.className = "lamp-on";
+    } else if (msg === "OFF1") {
+      lamp1State = false;
+      btn.textContent = "灯 1 关";
+      btn.className = "lamp-off";
+    }
+  }
+  else if (topic === lampTimerTopic) {
+    // 恢复定时面板显示（页面刷新后从Retained消息同步）
+    if (msg === "TIMER_OFF") {
+      document.getElementById("timerEnable").checked = false;
+      setTimerInputsEnabled(false);
+      document.getElementById("timerStatus").textContent = "定时已关闭";
+    } else if (msg.startsWith("TIMER:")) {
+      const parts = msg.substring(6).split(":");
+      if (parts.length === 4) {
+        document.getElementById("timerEnable").checked = true;
+        setTimerInputsEnabled(true);
+        document.getElementById("timeOn").value  = parts[0].padStart(2,"0") + ":" + parts[1].padStart(2,"0");
+        document.getElementById("timeOff").value = parts[2].padStart(2,"0") + ":" + parts[3].padStart(2,"0");
+        document.getElementById("timerStatus").textContent =
+          `✅ 已生效：${parts[0]}:${parts[1]} 开灯，${parts[2]}:${parts[3]} 关灯`;
+      }
+    }
+  }
+});
+
+
+// ==================== 定时面板交互 ====================
+function onTimerEnableChange() {
+  const enabled = document.getElementById("timerEnable").checked;
+  setTimerInputsEnabled(enabled);
+}
+
+
+function setTimerInputsEnabled(enabled) {
+  const inputs = document.getElementById("timerInputs");
+  inputs.style.opacity = enabled ? "1" : "0.4";
+  inputs.style.pointerEvents = enabled ? "auto" : "none";
+}
+
+
+function saveTimer() {
+  const enabled = document.getElementById("timerEnable").checked;
+  const btn = document.getElementById("btnSave");
+
+
+  if (!enabled) {
+    client.publish(lampTimerTopic, "TIMER_OFF", { qos: 1, retain: true });
+    document.getElementById("timerStatus").textContent = "定时已关闭";
+    return;
   }
 
 
-  if (topic === pumpStatus) {
-    pump = (msg === "PUMP_ON");
-    updatePump();
+  const timeOn  = document.getElementById("timeOn").value;   // "HH:MM"
+  const timeOff = document.getElementById("timeOff").value;
+
+
+  if (!timeOn || !timeOff) {
+    alert("请选择开灯和关灯时间");
+    return;
   }
-});
 
 
-/* ================= UI ================= */
+  const [onH, onM]   = timeOn.split(":");
+  const [offH, offM] = timeOff.split(":");
+  const cmd = `TIMER:${onH}:${onM}:${offH}:${offM}`;
 
 
-function updateLamp(){
-  const b = document.getElementById("lampBtn");
-  b.innerText = lamp ? "开启" : "关闭";
-  b.className = lamp ? "on" : "off";
+  btn.disabled = true;
+  btn.textContent = "发送中...";
+
+
+  client.publish(lampTimerTopic, cmd, { qos: 1, retain: true }, () => {
+    btn.disabled = false;
+    btn.textContent = "保存定时设置";
+    document.getElementById("timerStatus").textContent =
+      `✅ 已生效：${timeOn} 开灯，${timeOff} 关灯`;
+    console.log("定时已发送:", cmd);
+  });
 }
 
 
-function updatePump(){
-  const b = document.getElementById("pumpBtn");
-  b.innerText = pump ? "开启" : "关闭";
-  b.className = pump ? "on" : "off";
+// ==================== 控制函数 ====================
+function handlePump(cb) {
+  const cmd = cb.checked ? 'PUMP_ON' : 'PUMP_OFF';
+  client.publish(pumpCmdTopic, cmd, { qos: 1 });
 }
 
 
-function toggleLamp(){
-  client.publish(lampCmd, lamp ? "OFF1" : "ON1");
+function toggleLamp() {
+  const cmd = lamp1State ? 'OFF1' : 'ON1';
+  client.publish(lampCmdTopic, cmd, { qos: 1 });
 }
-
-
-function togglePump(){
-  client.publish(pumpCmd, pump ? "PUMP_OFF" : "PUMP_ON");
-}
-
-
 </script>
-
-
 </body>
 </html>
