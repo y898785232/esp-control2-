@@ -10,106 +10,92 @@
       text-align: center;
       font-family: Arial, sans-serif;
       background: #f0f2f5;
-      padding: 20px 15px;
+      padding: 15px 12px;
       margin: 0;
       min-height: 100vh;
     }
     h2 { 
       color: #333; 
-      margin: 10px 0 5px; 
-      font-size: 28px;
+      margin: 5px 0 8px; 
+      font-size: 22px;
     }
     .dev-id { 
       color: #888; 
-      font-size: 15px; 
-      margin-bottom: 25px; 
+      font-size: 13.5px; 
+      margin-bottom: 18px; 
     }
     
-    /* 水泵滑动开关 */
+    /* ==================== 移动端重点缩小 ==================== */
     .toggle-switch {
       position: relative;
       display: inline-block;
       width: 100%;
-      max-width: 380px;
-      height: 150px;
-      margin: 20px auto;
+      max-width: 290px;     /* 明显缩小 */
+      height: 110px;        /* 明显缩小 */
+      margin: 12px auto;
     }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
     .slider {
-      position: absolute;
-      cursor: pointer;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: #ccc;
-      border-radius: 80px;
-      transition: 0.4s;
-      box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background: #ccc; border-radius: 80px; transition: 0.4s;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.18);
     }
     .slider:before {
-      position: absolute;
-      content: "";
-      height: 130px;
-      width: 130px;
-      left: 10px;
-      bottom: 10px;
+      height: 94px;         /* 缩小 */
+      width: 94px;          /* 缩小 */
+      left: 8px; bottom: 8px;
       background: white;
-      border-radius: 50%;
-      transition: 0.4s;
+      border-radius: 50%; transition: 0.4s;
     }
-    input:checked + .slider { background: #28a745; }
-    input:checked + .slider:before { transform: translateX(210px); }
+    input:checked + .slider:before { transform: translateX(175px); }
 
     .slider span {
-      position: absolute;
-      top: 50%;
-      transform: translateY(-50%);
-      font-size: 30px;
-      font-weight: bold;
-      color: white;
+      font-size: 24px;      /* 缩小字体 */
     }
-    .off { left: 50px; }
-    .on { right: 50px; opacity: 0; }
-    input:checked + .slider .off { opacity: 0; }
-    input:checked + .slider .on { opacity: 1; }
+    .off { left: 38px; }
+    .on { right: 38px; opacity: 0; }
 
-    /* 灯按钮 */
     button {
       width: 100%;
-      max-width: 320px;
-      height: 90px;
-      font-size: 28px;
-      margin: 15px auto;
+      max-width: 260px;     /* 缩小 */
+      height: 68px;         /* 缩小 */
+      font-size: 23px;
+      margin: 10px auto;
       border: none;
-      border-radius: 15px;
+      border-radius: 12px;
       cursor: pointer;
       font-weight: bold;
-      display: block;
     }
-    .lamp-on  { background: #28a745; color: white; }
-    .lamp-off { background: #dc3545; color: white; }
-    
+
     .status-bar {
-      display: inline-block;
-      padding: 8px 24px;
-      border-radius: 20px;
-      font-weight: bold;
-      font-size: 16px;
-      margin-bottom: 25px;
+      padding: 6px 18px;
+      font-size: 14.5px;
+      margin-bottom: 18px;
     }
-    .online { background: #e6f7ed; color: #1f8b4c; }
-    .offline { background: #ffebeb; color: #dc3545; }
 
-    hr {
-      width: 85%; 
+    hr { 
+      width: 80%; 
       border: 0.5px solid #ddd; 
-      margin: 30px auto;
+      margin: 22px auto; 
     }
 
-    /* 移动端优化 */
+    /* 超小屏额外优化 */
     @media (max-width: 480px) {
-      h2 { font-size: 24px; }
-      .toggle-switch { height: 140px; }
-      .slider:before { height: 120px; width: 120px; }
-      button { height: 80px; font-size: 26px; }
+      h2 { font-size: 20px; }
+      .toggle-switch { 
+        max-width: 275px; 
+        height: 105px; 
+      }
+      .slider:before { 
+        height: 88px; 
+        width: 88px; 
+      }
+      input:checked + .slider:before { transform: translateX(165px); }
+      button { 
+        max-width: 250px; 
+        height: 64px; 
+        font-size: 22px; 
+      }
+      .slider span { font-size: 22px; }
     }
   </style>
 </head>
@@ -134,7 +120,7 @@
   <button id="lampBtn" class="lamp-off" onclick="toggleLamp()">灯 1 关</button>
 
 <script>
-// ==================== 配置区 ====================
+// ==================== 配置区（不变） ====================
 const DEVICE_ID = "device_01";
 const BROKER_URL = "wss://b7fea2bf.ala.asia-southeast1.emqxsl.com:8084/mqtt";
 
@@ -148,54 +134,40 @@ const client = mqtt.connect(BROKER_URL, {
   username: 'eps8266nn',
   password: 'yu155414',
   clean: true,
-  connectTimeout: 10000,
-  reconnectPeriod: 5000,
-  keepalive: 60
+  reconnectPeriod: 5000
 });
 
-// ==================== 连接事件 ====================
 client.on('connect', () => {
-  console.log("✅ MQTT 已成功连接！");
   const statusEl = document.getElementById("netStatus");
   statusEl.textContent = "🟢 云端已连接";
   statusEl.className = "status-bar online";
-
   client.subscribe(statusTopic, { qos: 1 });
 });
 
-client.on('reconnect', () => console.log("🔄 正在重连..."));
 client.on('close', () => {
   const statusEl = document.getElementById("netStatus");
   statusEl.textContent = "🔴 云端已断开";
   statusEl.className = "status-bar offline";
 });
-client.on('error', (err) => console.error("MQTT 错误:", err));
 
-// ==================== 接收消息 ====================
 client.on('message', (topic, message) => {
   const msg = message.toString().trim();
-  console.log(`收到: ${msg}`);
-
   if (msg === "PUMP_ON") document.getElementById("pumpSwitch").checked = true;
   else if (msg === "PUMP_OFF") document.getElementById("pumpSwitch").checked = false;
   else if (msg === "ON1") {
     lamp1State = true;
     const btn = document.getElementById("lampBtn");
-    btn.textContent = "灯 1 开"; 
-    btn.className = "lamp-on";
+    btn.textContent = "灯 1 开"; btn.className = "lamp-on";
   }
   else if (msg === "OFF1") {
     lamp1State = false;
     const btn = document.getElementById("lampBtn");
-    btn.textContent = "灯 1 关"; 
-    btn.className = "lamp-off";
+    btn.textContent = "灯 1 关"; btn.className = "lamp-off";
   }
 });
 
-// ==================== 控制函数 ====================
 function handlePump(cb) {
-  const cmd = cb.checked ? 'PUMP_ON' : 'PUMP_OFF';
-  client.publish(cmdTopic, cmd, { qos: 1 });
+  client.publish(cmdTopic, cb.checked ? 'PUMP_ON' : 'PUMP_OFF', { qos: 1 });
 }
 
 function toggleLamp() {
