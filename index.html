@@ -6,13 +6,7 @@
   <title>水泵控制系统 - 大门</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
   <style>
-    body {
-      text-align: center;
-      font-family: Arial, sans-serif;
-      background: #f0f2f5;
-      padding: 20px 15px;
-      margin: 0;
-    }
+    body { text-align: center; font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px 15px; margin: 0; }
     h2 { color: #333; margin-bottom: 5px; font-size: 26px; }
     .dev-id { color: #888; font-size: 14px; margin-bottom: 25px; }
     
@@ -30,6 +24,7 @@
     input:checked + .slider { background: #28a745; }
     input:checked + .slider:before { transform: translateX(178px); }
 
+
     .slider span {
       position: absolute; top: 50%; transform: translateY(-50%);
       font-size: 27px; font-weight: bold; color: white;
@@ -39,20 +34,10 @@
     input:checked + .slider .off { opacity: 0; }
     input:checked + .slider .on { opacity: 1; }
 
-    button {
-      width: 100%; max-width: 238px; height: 72px; font-size: 24px; margin: 15px auto;
-      border: none; border-radius: 12px; cursor: pointer; font-weight: bold; display: block;
-    }
-    .lamp-on  { background: #28a745; color: white; }
-    .lamp-off { background: #dc3545; color: white; }
-    
-    .status-bar {
-      display: inline-block; padding: 6px 20px; border-radius: 20px;
-      font-weight: bold; font-size: 15px; margin-bottom: 20px;
-    }
+
+    .status-bar { display: inline-block; padding: 6px 20px; border-radius: 20px; font-weight: bold; font-size: 15px; margin-bottom: 20px; }
     .online { background: #e6f7ed; color: #1f8b4c; }
     .offline { background: #ffebeb; color: #dc3545; }
-
     hr { width: 80%; border: 0.5px solid #ddd; margin: 25px auto; }
   </style>
 </head>
@@ -61,6 +46,7 @@
   <div class="dev-id">设备 ID: device_01</div>
   
   <div id="netStatus" class="status-bar offline">正在连接云端...</div>
+
 
   <p><strong>水泵遥控开关</strong></p>
   <label class="toggle-switch">
@@ -71,77 +57,73 @@
     </div>
   </label>
 
+
   <hr>
 
+
   <p><strong>💡 大门照明（灯 1）</strong></p>
-  <button id="lampBtn" class="lamp-off" onclick="toggleLamp()">灯 1 关</button>
+  <label class="toggle-switch">
+    <input type="checkbox" id="lampSwitch" onchange="handleLamp(this)">
+    <div class="slider">
+      <span class="off">🚫 关灯</span>
+      <span class="on">✅ 开灯</span>
+    </div>
+  </label>
+
 
 <script>
 // ==================== 配置 ====================
 const DEVICE_ID = "device_01";
 const BROKER_URL = "wss://b7fea2bf.ala.asia-southeast1.emqxsl.com:8084/mqtt";
 
+
 const cmdTopic    = `home/${DEVICE_ID}/pump/cmd`;
 const statusTopic = `home/${DEVICE_ID}/pump/status`;
 
-let lamp1State = false;   // 默认关闭
 
 const client = mqtt.connect(BROKER_URL, {
   clientId: 'web_' + Math.random().toString(16).substr(2, 8),
   username: 'eps8266nn',
   password: 'yu155414',
-  clean: true,
   reconnectPeriod: 4000
 });
 
-// 连接成功
+
 client.on('connect', () => {
-  console.log("✅ 已连接");
-  const statusEl = document.getElementById("netStatus");
-  statusEl.textContent = "🟢 云端已连接";
-  statusEl.className = "status-bar online";
-  
+  document.getElementById("netStatus").innerHTML = "🟢 云端已连接";
+  document.getElementById("netStatus").className = "status-bar online";
   client.subscribe(statusTopic, { qos: 1 });
 });
 
-// 接收状态（重点修复）
+
 client.on('message', (topic, message) => {
   const msg = message.toString().trim();
-  console.log("收到状态:", msg);
+  console.log("收到:", msg);   // 方便调试
 
-  if (msg === "PUMP_ON") {
-    document.getElementById("pumpSwitch").checked = true;
-  } else if (msg === "PUMP_OFF") {
-    document.getElementById("pumpSwitch").checked = false;
-  } 
-  else if (msg === "ON1") {
-    lamp1State = true;
-    const btn = document.getElementById("lampBtn");
-    btn.textContent = "灯 1 开";
-    btn.className = "lamp-on";
-  } 
-  else if (msg === "OFF1") {
-    lamp1State = false;
-    const btn = document.getElementById("lampBtn");
-    btn.textContent = "灯 1 关";
-    btn.className = "lamp-off";
-  }
+
+  if (msg === "PUMP_ON")  document.getElementById("pumpSwitch").checked = true;
+  if (msg === "PUMP_OFF") document.getElementById("pumpSwitch").checked = false;
+
+
+  if (msg === "ON1")  document.getElementById("lampSwitch").checked = true;
+  if (msg === "OFF1") document.getElementById("lampSwitch").checked = false;
 });
+
 
 client.on('close', () => {
-  const statusEl = document.getElementById("netStatus");
-  statusEl.textContent = "🔴 云端已断开";
-  statusEl.className = "status-bar offline";
+  document.getElementById("netStatus").innerHTML = "🔴 云端已断开";
+  document.getElementById("netStatus").className = "status-bar offline";
 });
 
-// 控制函数
+
+// ==================== 控制函数 ====================
 function handlePump(cb) {
   client.publish(cmdTopic, cb.checked ? 'PUMP_ON' : 'PUMP_OFF', { qos: 1 });
 }
 
-function toggleLamp() {
-  const cmd = lamp1State ? 'OFF1' : 'ON1';
-  client.publish(cmdTopic, cmd, { qos: 1 });
+
+function handleLamp(cb) {
+  client.publish(cmdTopic, cb.checked ? 'ON1' : 'OFF1', { qos: 1 });
 }
 </script>
 </body>
