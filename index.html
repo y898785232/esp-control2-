@@ -1,117 +1,134 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>水泵控制系统 - 大门</title>
-  <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
-  <style>
-    body { text-align: center; font-family: Arial, sans-serif; background: #f0f2f5; padding: 20px 15px; margin: 0; }
-    h2 { color: #333; margin-bottom: 5px; font-size: 26px; }
-    .dev-id { color: #888; font-size: 14px; margin-bottom: 25px; }
-    
-    .toggle-switch { position: relative; display: inline-block; width: 100%; max-width: 323px; height: 136px; margin: 20px auto; }
-    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 80px; transition: 0.4s; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
-    .slider:before { position: absolute; content: ""; height: 119px; width: 119px; left: 8px; bottom: 8px; background: white; border-radius: 50%; transition: 0.4s; }
-    input:checked + .slider { background: #28a745; }
-    input:checked + .slider:before { transform: translateX(178px); }
-    .slider span { position: absolute; top: 50%; transform: translateY(-50%); font-size: 27px; font-weight: bold; color: white; }
-    .off { left: 48px; }
-    .on { right: 48px; opacity: 0; }
-    input:checked + .slider .off { opacity: 0; }
-    input:checked + .slider .on { opacity: 1; }
+<meta charset="utf-8">
+<title>控制系统</title>
+<script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
 
 
-    .status-bar { display: inline-block; padding: 6px 20px; border-radius: 20px; font-weight: bold; font-size: 15px; margin-bottom: 20px; }
-    .online { background: #e6f7ed; color: #1f8b4c; }
-    .offline { background: #ffebeb; color: #dc3545; }
-    hr { width: 80%; border: 0.5px solid #ddd; margin: 25px auto; }
-  </style>
+<style>
+body { text-align:center; font-family:Arial; }
+
+
+button {
+  width:200px;height:80px;font-size:24px;margin:10px;
+}
+
+
+.on { background:green;color:white; }
+.off { background:red;color:white; }
+
+
+.status { margin:10px;padding:8px;display:inline-block; }
+</style>
 </head>
+
+
 <body>
-  <h2>🚰 水泵控制系统</h2>
-  <div class="dev-id">设备 ID: device_01</div>
-  
-  <div id="netStatus" class="status-bar offline">正在连接云端...</div>
 
 
-  <p><strong>水泵遥控开关</strong></p>
-  <label class="toggle-switch">
-    <input type="checkbox" id="pumpSwitch" onchange="handlePump(this)">
-    <div class="slider">
-      <span class="off">🚫 关闭</span>
-      <span class="on">✅ 开启</span>
-    </div>
-  </label>
+<h2>设备控制</h2>
 
 
-  <hr>
+<div id="status">连接中...</div>
 
 
-  <p><strong>💡 大门照明（灯 1）</strong></p>
-  <label class="toggle-switch">
-    <input type="checkbox" id="lampSwitch" onchange="handleLamp(this)">
-    <div class="slider">
-      <span class="off">🚫 关灯</span>
-      <span class="on">✅ 开灯</span>
-    </div>
-  </label>
+<hr>
+
+
+<h3>灯</h3>
+<button id="lampBtn" class="off" onclick="toggleLamp()">关闭</button>
+
+
+<h3>水泵</h3>
+<button id="pumpBtn" class="off" onclick="togglePump()">关闭</button>
 
 
 <script>
-// ==================== 配置 ====================
+
+
 const DEVICE_ID = "device_01";
-const BROKER_URL = "wss://b7fea2bf.ala.asia-southeast1.emqxsl.com:8084/mqtt";
+const BROKER = "wss://b7fea2bf.ala.asia-southeast1.emqxsl.com:8084/mqtt";
 
 
-const cmdTopic    = `home/${DEVICE_ID}/pump/cmd`;
-const statusTopic = `home/${DEVICE_ID}/pump/status`;
+const lampCmd = `home/${DEVICE_ID}/lamp1/cmd`;
+const pumpCmd = `home/${DEVICE_ID}/pump/cmd`;
 
 
-const client = mqtt.connect(BROKER_URL, {
-  clientId: 'web_' + Math.random().toString(16).substr(2, 8),
-  username: 'eps8266nn',
-  password: 'yu155414',
-  reconnectPeriod: 4000
+const lampStatus = `home/${DEVICE_ID}/lamp1/status`;
+const pumpStatus = `home/${DEVICE_ID}/pump/status`;
+
+
+let lamp = false;
+let pump = false;
+
+
+const client = mqtt.connect(BROKER,{
+  username:"eps8266nn",
+  password:"yu155414",
+  clientId:"web_" + Math.random().toString(16).substr(2,8)
 });
 
 
-client.on('connect', () => {
-  document.getElementById("netStatus").innerHTML = "🟢 云端已连接";
-  document.getElementById("netStatus").className = "status-bar online";
-  
-  client.subscribe(statusTopic, { qos: 1 });
+client.on("connect", () => {
+  document.getElementById("status").innerText = "已连接";
+
+
+  client.subscribe(lampStatus);
+  client.subscribe(pumpStatus);
+
+
+  // 自动同步状态（关键）
+  client.publish(`home/${DEVICE_ID}/cmd`, "QUERY");
 });
 
 
-client.on('message', (topic, message) => {
-  const msg = message.toString().trim();
-  console.log("收到状态:", msg);
+client.on("message", (topic, msg) => {
+  msg = msg.toString();
 
 
-  if (msg === "PUMP_ON")  document.getElementById("pumpSwitch").checked = true;
-  if (msg === "PUMP_OFF") document.getElementById("pumpSwitch").checked = false;
+  if (topic === lampStatus) {
+    lamp = (msg === "ON1");
+    updateLamp();
+  }
 
 
-  if (msg === "ON1")  document.getElementById("lampSwitch").checked = true;
-  if (msg === "OFF1") document.getElementById("lampSwitch").checked = false;
+  if (topic === pumpStatus) {
+    pump = (msg === "PUMP_ON");
+    updatePump();
+  }
 });
 
 
-client.on('close', () => {
-  document.getElementById("netStatus").innerHTML = "🔴 云端已断开";
-  document.getElementById("netStatus").className = "status-bar offline";
-});
+/* ================= UI ================= */
 
 
-function handlePump(cb) {
-  client.publish(cmdTopic, cb.checked ? 'PUMP_ON' : 'PUMP_OFF', { qos: 1 });
+function updateLamp(){
+  const b = document.getElementById("lampBtn");
+  b.innerText = lamp ? "开启" : "关闭";
+  b.className = lamp ? "on" : "off";
 }
 
 
-function handleLamp(cb) {
-  client.publish(cmdTopic, cb.checked ? 'ON1' : 'OFF1', { qos: 1 });
+function updatePump(){
+  const b = document.getElementById("pumpBtn");
+  b.innerText = pump ? "开启" : "关闭";
+  b.className = pump ? "on" : "off";
 }
+
+
+function toggleLamp(){
+  client.publish(lampCmd, lamp ? "OFF1" : "ON1");
+}
+
+
+function togglePump(){
+  client.publish(pumpCmd, pump ? "PUMP_OFF" : "PUMP_ON");
+}
+
+
 </script>
+
+
 </body>
 </html>
