@@ -10,25 +10,12 @@
     h2 { color: #333; margin-bottom: 5px; font-size: 26px; }
     .dev-id { color: #888; font-size: 14px; margin-bottom: 25px; }
     
-    .toggle-switch {
-      position: relative; display: inline-block; width: 100%; max-width: 323px; height: 136px; margin: 20px auto;
-    }
-    .slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background: #ccc; border-radius: 80px; transition: 0.4s; box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-    }
-    .slider:before {
-      position: absolute; content: ""; height: 119px; width: 119px; left: 8px; bottom: 8px;
-      background: white; border-radius: 50%; transition: 0.4s;
-    }
+    .toggle-switch { position: relative; display: inline-block; width: 100%; max-width: 323px; height: 136px; margin: 20px auto; }
+    .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: #ccc; border-radius: 80px; transition: 0.4s; box-shadow: 0 8px 25px rgba(0,0,0,0.2); }
+    .slider:before { position: absolute; content: ""; height: 119px; width: 119px; left: 8px; bottom: 8px; background: white; border-radius: 50%; transition: 0.4s; }
     input:checked + .slider { background: #28a745; }
     input:checked + .slider:before { transform: translateX(178px); }
-
-
-    .slider span {
-      position: absolute; top: 50%; transform: translateY(-50%);
-      font-size: 27px; font-weight: bold; color: white;
-    }
+    .slider span { position: absolute; top: 50%; transform: translateY(-50%); font-size: 27px; font-weight: bold; color: white; }
     .off { left: 48px; }
     .on { right: 48px; opacity: 0; }
     input:checked + .slider .off { opacity: 0; }
@@ -92,13 +79,14 @@ const client = mqtt.connect(BROKER_URL, {
 client.on('connect', () => {
   document.getElementById("netStatus").innerHTML = "🟢 云端已连接";
   document.getElementById("netStatus").className = "status-bar online";
+  
   client.subscribe(statusTopic, { qos: 1 });
 });
 
 
 client.on('message', (topic, message) => {
   const msg = message.toString().trim();
-  console.log("收到:", msg);   // 方便调试
+  console.log("收到状态:", msg);
 
 
   if (msg === "PUMP_ON")  document.getElementById("pumpSwitch").checked = true;
@@ -116,7 +104,6 @@ client.on('close', () => {
 });
 
 
-// ==================== 控制函数 ====================
 function handlePump(cb) {
   client.publish(cmdTopic, cb.checked ? 'PUMP_ON' : 'PUMP_OFF', { qos: 1 });
 }
