@@ -112,14 +112,14 @@
 
   <br><hr style="width: 80%; border: 0.5px solid #ddd;"><br>
 
-  <p><strong>💡 大棚照明（灯 1）</strong></p>
-  <button id="lampBtn" class="lamp-off" onclick="toggleLamp()">灯 1 关</button>
+  <p><strong>💡 大门照明</strong></p>
+  <button id="lampBtn" class="lamp-off" onclick="toggleLamp()">大门灯 关</button>
 
   <br>
 
   <!-- 定时面板 -->
   <div class="timer-panel">
-    <h3>⏰ 灯定时设置</h3>
+    <h3>⏰ 大门灯定时设置</h3>
 
     <div class="timer-enable-row">
       <input type="checkbox" id="timerEnable" onchange="onTimerEnableChange()">
@@ -192,7 +192,6 @@ client.on('connect', () => {
   client.subscribe(pumpStatusTopic, { qos: 1 });
   client.subscribe(lampTimerTopic,  { qos: 1 });
 
-  // 连接后查询设备当前状态
   setTimeout(() => {
     client.publish(lampCmdTopic, "QUERY_STATE", { qos: 1 });
   }, 600);
@@ -221,11 +220,11 @@ client.on('message', (topic, message) => {
     const btn = document.getElementById("lampBtn");
     if (msg === "ON1") {
       lamp1State = true;
-      btn.textContent = "灯 1 开";
+      btn.textContent = "大门灯 开";
       btn.className = "lamp-on";
     } else if (msg === "OFF1") {
       lamp1State = false;
-      btn.textContent = "灯 1 关";
+      btn.textContent = "大门灯 关";
       btn.className = "lamp-off";
     } else if (msg === "OTA_START") {
       document.getElementById("otaStatus").textContent = "🚀 正在升级固件，请勿断电...";
@@ -254,7 +253,7 @@ client.on('message', (topic, message) => {
   }
 });
 
-// ==================== 离线检测（6分钟）====================
+// ==================== 离线检测 ====================
 setInterval(() => {
   if (lastSeen > 0 && Date.now() - lastSeen > 360000) {
     document.getElementById("offlineTip").style.display = "block";
