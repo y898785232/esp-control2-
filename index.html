@@ -2,6 +2,7 @@
 <html>
 <head>
   <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>鏅鸿兘瀹跺眳鎺у埗绯荤粺</title>
   <script src="https://unpkg.com/mqtt/dist/mqtt.min.js"></script>
@@ -46,39 +47,39 @@
   </style>
 </head>
 <body>
-  <h2>鏅鸿兘瀹跺眳鎺у埗绯荤粺</h2>
+  <h2> 鏅鸿兘瀹跺眳鎺у埗绯荤粺</h2>
   <div class="dev-id">璁惧 ID: <span id="deviceIdDisplay"></span></div>
   <div id="netStatus" class="status-bar离线">姝e湪杩炴帴浜戠...</div>
-  <div class="device-offline-tip" id="offlineTip">钿狅笍璁恐绂荤愁鎴栨湭阃氱数</div>
+  <div class="device-offline-tip" id="offlineTip">⚠️ 璁恐绂荤哀鎴栨湭阃氱数</div>
 
-  <p><strong>姘存车阆ユ带寮€鍏�</strong></p>
+  <p><strong> 姘存车阆ユ带寮€鍏�</strong></p>
   <label class="toggle-switch">
     <input type="checkbox" id="pumpSwitch" onchange="handlePump(this)">
     <div class="slider">
-      <span class="off">鍏抽棴</span>
-      <span class="on">鉁�寮€钖�</span>
+      <span class="off"> 鍏抽棴</span>
+      <span class="on">✅ 寮€钖�</span>
     </div>
   </label>
 
   <br><hr style="width: 80%; border: 0.5px solid #ddd;"><br>
 
-  <p><strong>澶ф镦ф槑锛堢伅1锛�</strong></p>
+  <p><strong> 澶ф镦ф槑锛堢伅1锛�</strong></p>
   <button id="lampBtn" class="lamp-off" onclick="toggleLamp()">鐏� 1 鍏�</button>
   <br>
 
   <div class="timer-panel">
-    <h3>铃� 鐏畾镞动力缃�</h3>
+    <h3>⏰ 㐏畾镞惰性缃�</h3>
     <div class="timer-enable-row">
       <input type="checkbox" id="timerEnable" onchange="onTimerEnableChange()">
       <label for="timerEnable">钖敤瀹氭椂从姩寮€鍏崇伅</label>
     </div>
     <div id="timerInputs" style="opacity:0.4; pointer-events:none;">
       <div class="timer-row">
-        <label>寮€鐏椂闂�</label>
+        <标签> 寮€鐏椂闂�</label>
         <input type="time" id="timeOn" value="18:00">
       </div>
       <div class="timer-row">
-        <label>鍏崇伅镞堕棿</label>
+        <标签> 鍏崇伅镞堕棿</label>
         <input type="time" id="timeOff" value="22:00">
       </div>
     </div>
@@ -87,8 +88,8 @@
   </div>
 
   <div class="ota-panel">
-    <h3>钿欙笍绯荤粺缁存姢</h3>
-    <button class="btn-ota" onclick="triggerOTA()">杩灭▼ OTA 鍗囩埃</button>
+    <h3>⚙️ 绯荤粺缁存姢</h3>
+    <button class="btn-ota" onclick="triggerOTA()"> 杩灭▼ OTA 鍗囩埃</button>
     <div class="ota-status" id="otaStatus"></div>
   </div>
 
@@ -122,7 +123,7 @@ const client = mqtt.connect(BROKER_URL, {
 
 client.on('connect', () => {
   const statusEl = document.getElementById("netStatus");
-  statusEl.textContent = "馃煝浜戠宸茶繛鎺�";
+  statusEl.textContent = "浜戠宸茶繛鎺�";
   statusEl.className = "状态栏在线";
   client.subscribe(lampStatusTopic, { qos: 1 });
   client.subscribe(pumpStatusTopic, { qos: 1 });
@@ -149,9 +150,9 @@ client.on('message', (topic, message) => {
     const btn = document.getElementById("lampBtn");
     if (msg === "ON1") { lamp1State = true; btn.textContent = "鐏� 1 寮€"; btn.className = "lamp-on"; }
     否则如果 (msg === "OFF1") { lamp1State = false; btn.textContent = "鐏� 1 鍏�"; btn.className = "lamp-off"; }
-    else if (msg === "OTA_START") { document.getElementById("otaStatus").textContent = " 姝e湪鍗囩锲轰欢锛岃鍕挎柇鐢�..."; }
-    else if (msg === "OTA_OK") { document.getElementById("otaStatus").textContent = "鉁� 鍗囩埃鎴愬姛锛岃澶回吨钖肚..."; }
-    else if (msg === "OTA_FAIL") { document.getElementById("otaStatus").textContent = "鉂� 鍗囩恐澶辫触锛岃阅嶈瘯"; }
+    else if (msg === "OTA_START") { document.getElementById("otaStatus").textContent = "姝e湪鍗囩锲轰欢锛岃鍕挎柇鐢�..."; }
+    else if (msg === "OTA_OK") { document.getElementById("otaStatus").textContent = "鍗囩鎴愬姛锛岃澶回吨钖腹..."; }
+    else if (msg === "OTA_FAIL") { document.getElementById("otaStatus").textContent = "鍗囩恐澶辫触锛岃阅读嶈瘯"; }
   }
   否则如果（主题 === lampTimerTopic）{
     如果 (msg === "TIMER_OFF") {
@@ -165,7 +166,7 @@ client.on('message', (topic, message) => {
         setTimerInputsEnabled(true);
         document.getElementById("timeOn").value = parts[0].padStart(2,"0") + ":" + parts[1].padStart(2,"0");
         document.getElementById("timeOff").value = parts[2].padStart(2,"0") + ":" + parts[3].padStart(2,"0");
-        document.getElementById("timerStatus").textContent = `鉁� 陈茬敓鏁堬细${parts[0]}:${parts[1]} 寮€鐏纴${parts[2]}:${parts[3]} 鍏崇伅`;
+        document.getElementById("timerStatus").textContent = "陈茬敓鏁堬细" + parts[0] + ":" + parts[1] + " 寮€鐏纴" + parts[2] + ":" + parts[3] + " 鍏崇伅";
       }
     }
   }
@@ -197,22 +198,22 @@ function saveTimer() {
   if (!timeOn || !timeOff) { alert("轩烽€夋嫨寮€鐏拰鍏伅镞堕棿");返回; }
   const [onH, onM] = timeOn.split(":");
   const [offH, offM] = timeOff.split(":");
-  const cmd = `TIMER:${onH}:${onM}:${offH}:${offM}`;
+  const cmd = "TIMER:" + onH + ":" + onM + ":" + offH + ":" + offM;
   btn.disabled = true;
   btn.textContent = "鍙戦€佷腹...";
   client.publish(lampTimerTopic, cmd, { qos: 1, retain: true }, () => {
     btn.disabled = false;
     btn.textContent = "奶油濆瓨瀹氭椂璁剧疆";
-    document.getElementById("timerStatus").textContent = `鉁� 陈茬敓鏁堬细${timeOn} 寮€鐏纴${timeOff} 鍏崇伅`;
+    document.getElementById("timerStatus").textContent = "陈茬敓鏁堬细" + timeOn + " 寮€鐏纴" + timeOff + " 鍏崇伅";
   });
 }
 
 function handlePump(cb) { client.publish(pumpCmdTopic, cb.checked ? 'PUMP_ON' : 'PUMP_OFF', { qos: 1 }); }
 function toggleLamp() { client.publish(lampCmdTopic, lamp1State ? 'OFF1' : 'ON1', { qos: 1 }); }
 函数 triggerOTA() {
-  if (confirm("外部畾瑕疵佽繘貃翻绋嫔浐浠跺崌绾у悧锛焅n鍗囩恐链熼棿璁恐浼氶吨钖€�")) {
+  if (confirm("外部畾瑕疵佽繘貃翻绋嫔浐浠跺崌绾у悧锛熷崌绾ф湡闂图片澶囦细阅嶅惎銆�")) {
     client.publish(lampCmdTopic, "OTA", { qos: 1 });
-    document.getElementById("otaStatus").textContent = " OTA鎸囦护臣插彂阃侊纴绛夊緟璁恐鍝嶅簲...";
+    document.getElementById("otaStatus").textContent = "OTA鎸囦护臣插彂阃侊纴绛夊緟璁恐鍝嶅簲...";
   }
 }
 </script>
